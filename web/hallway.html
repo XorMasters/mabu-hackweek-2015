@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+
+  <style>
+
+  * {
+  	margin-bottom: 0;
+  }
+
+  html, body {
+  	height: 100%;
+  }
+
+  .section {
+  	border: 1px dotted black;
+  	margin-bottom: 0.35em;
+  }
+
+  .input {
+  	width: 90%;
+  }
+
+  .enabled {
+  	align: right;
+  }
+
+  #wrapper {
+  	min-height: 100%;
+	height: auto !important;
+	margin: 0 auto -4em;  
+  }
+
+  #twicker {
+  	height: 4em;
+  }
+
+  </style>
+
+  <script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"/></script>
+  <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>  
+  <script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+
+  <script>
+  	var sessionId = null;
+  	var firebaseRef = null;
+
+  	$( document ).ready(function() {
+
+      sessionId = window.location.search.substr(1).replace(/-/g, "");
+
+      firebaseRef = new Firebase("https://mabu-hackweek-2015-d.firebaseio.com/"+sessionId);
+
+	  firebaseRef.once("value", function(snapshot){
+	  	config = snapshot.val();
+	  	if(config == null) {
+	  		//Fill in an initial configuration
+	  		firebaseRef.set({
+	  				featuresEnabled: {
+	  					description: false,
+	  					"linked-in": false,
+	  					"doc-view": false,
+	  					chat: false,
+	  					twicker: false
+	  				}
+	  		});
+	  	} else {
+	  		// Make sure the webpage reflects the value on firebase
+	  		$("#description-enabled").prop( "checked", config.featuresEnabled.description );
+	  		$("#linked-in-enabled").prop( "checked", config.featuresEnabled["linked-in"] );
+	  		$("#doc-view-enabled").prop( "checked", config.featuresEnabled["doc-view"] );
+	  		$("#chat-enabled").prop( "checked", config.featuresEnabled.chat );
+	  		$("#twicker-enabled").prop( "checked", config.featuresEnabled.twicker );
+	  	}
+	  });
+	});
+
+
+	function handleEnableChange(input, section) {
+		var update = new Object();
+		update[section] = input.checked;
+		firebaseRef.child("featuresEnabled").update(update);
+	}
+
+  </script>
+
+  <body>
+
+  	<div id='wrapper'>
+  	<h3>Hallway</h3>
+  	<div class='section' name='description'>
+  	  <div class='title'>Description</div>
+  	  <input class='input' type='text' name='description-input'/>
+  	  <input class='enabled' type='checkbox' id='description-enabled' onclick='handleEnableChange(this, "description");'/>
+  	  <div class='presentation' name='description-presentation'></div>
+  	</div>
+  	
+  	<div class='section' name='linked-in'>
+  	  <div class='title'>Linked In Profile</div>
+  	  <input class='input' type='text' name='linked-in-input'/>
+  	  <input class='enabled' type='checkbox' id='linked-in-enabled' onclick='handleEnableChange(this, "linked-in");'/>
+  	  <div class='presentation' name='linked-in-presentation'></div>
+  	</div>
+  	  
+  	<div class='section' name='doc-view'>
+  	  <div class='title'>Document View</div>
+  	  <input class='input' type='text' name='doc-view-input'/>
+  	  <input class='enabled' type='checkbox' id='doc-view-enabled' onclick='handleEnableChange(this, "doc-view");'/>
+  	  <div class='presentation' name='doc-view-presentation'></div>
+	</div>
+
+  	<div class='section' name='chat'>
+  	  <div class='title'>Chat</div>
+  	  <input class='input' type='text' name='chat-input'/>
+  	  <input class='enabled' type='checkbox' id='chat-enabled' onclick='handleEnableChange(this, "chat");'/>
+  	  <div class='presentation' name='chat-presentation'></div>
+  	</div>
+  	</div>
+
+  	<div class='section' id='twicker'>
+  	  <div class='title'>The Twitter Ticker</div>
+  	  <input class='input' type='text' name='twicker-input'/>
+  	  <input class='enabled' type='checkbox' id='twicker-enabled' onclick='handleEnableChange(this, "twicker");'/>
+  	  <div class='presentation' name='twicker-presentation'></div>
+	</div>
+
+  </body>
+</html>
