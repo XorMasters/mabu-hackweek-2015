@@ -44,6 +44,10 @@
   	overflow: scroll;
   }
 
+  #doc-view-presentation {
+    width: 800px;
+  }
+
   </style>
 
   <script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"/></script>
@@ -122,12 +126,20 @@
 	  });
 
 	  initializeInput('linked-in/url', "linked-in-url", function(url){
-	  	loadLinkedInProfile($('#linked-in-url').val());	  	
+	  	loadLinkedInProfile(url);	  	
 	  });
 
 	  initializeInput('description/text', 'description-text', function(text){
-	  	loadDescription($('#description-text').val());	  	
+	  	loadDescription(text);	  	
 	  });
+
+    initializeInput('doc-view/url', 'doc-view-url', function(url){
+      loadDocView(url);
+    })
+
+    initializeInput('twicker/hashtag', 'twicker-hashtag', function(hashtag){
+      loadHashTag(hashtag);
+    });
 
 	  firebaseRef.child('chat/messages').on('child_added', chatHandler);
 
@@ -181,6 +193,24 @@
 		loadLinkedInProfile(data.url);
 	}
 
+  function handleDocViewUpdate(elmnt) {
+    var data = new Object();
+    data.url = $("#doc-view-url").val();
+    firebaseRef.child("doc-view").update(data);
+    loadDocView(data.url);
+  }
+
+  function handleHashTagUpdate(elmnt) {
+    var data = new Object();
+    data.hashtag = $("#twicker-hashtag").val();
+    firebaseRef.child("twicker").update(data);
+    loadHashTag(data.hashtag);
+  }
+
+  function loadHashTag(hashtag) {
+
+  }
+
 	function loadLinkedInProfile(url) {
 		$('#linked-in-presentation').html('<script type="IN/MemberProfile" data-id="'+ url +'" data-format="inline" data-related="false"><\/script>');
 		IN.parse();
@@ -189,6 +219,10 @@
 	function loadDescription(text) {
 		$("#description-presentation").html(text);
 	}
+
+  function loadDocView(url) {
+    $("#doc-view-presentation").html('<iframe width="75%" src="'+url+'"><\/iframe>');
+  }
 
 	function initializeInput(path, elmnt, func) {
 		firebaseRef.child(path).once("value", function(datasnapshot){
@@ -239,9 +273,9 @@
   	  </div>
   	  <div id="doc-view-input">
   	  	<input class='input' type='text' id='doc-view-url'/>
-  	  	<button>Update</button>
+  	  	<button onclick='handleDocViewUpdate("doc-view-url")'>Update</button>
   	  </div>
-  	  <div class='presentation' name='doc-view-presentation'></div>
+  	  <div class='presentation' id='doc-view-presentation'></div>
 	</div>
 
   	<div class='section' name='chat'>
@@ -266,9 +300,9 @@
   	  </div>
   	  <div id="twicker-input">
   	  	<input class='input' type='text' id='twicker-hashtag'/>
-  	  	<button>Update</button>
+  	  	<button onclick='handleHashTagUpdate("twicker-hashtag")'>Update</button>
   	  </div>
-  	  <div class='presentation' name='twicker-presentation'></div>
+  	  <div class='presentation' id='twicker-presentation'></div>
 	</div>
 
   </body>
