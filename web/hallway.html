@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+
+  <style>
+
+  * {
+  	margin-bottom: 0;
+  }
+
+  html, body {
+  	height: 99%;
+  }
+
+  .section {
+  	border: 1px dotted black;
+  	margin-bottom: 0.35em;
+  }
+
+  .input {
+  	width: 50em;
+  }
+
+  .enabled {
+  	align: right;
+  }
+
+  .chat-message {
+  	margin-bottom: 2em;
+  	margin-right: 1em;
+  	margin-left: 1em;
+  	border: 1px solid blue;
+  }
+
+  #wrapper {
+  	min-height: 100%;
+	height: auto !important;
+	margin: 0 auto -4em;  
+  }
+
+  #chat-presentation {
+  	height: 200px;
+  	overflow: scroll;
+  }
+
+  #doc-view-presentation {
+    width: 800px;
+  }
+
+  </style>
+
+  <script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"/></script>
+  <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>  
+  <script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script src="https://platform.linkedin.com/in.js" type="text/javascript"></script>
+
+  <script>
+
+  function guid() {
+	  function s4() {
+	    return Math.floor((1 + Math.random()) * 0x10000)
+	      .toString(16)
+	      .substring(1);
+	  }
+	  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+	    s4() + '-' + s4() + s4() + s4();
+	}
+
+  	var sessionId = null;
+  	var firebaseRef = null;
+  	var features = ["description", "chat", "doc-view", "linked-in", "twicker"];
+  	var myAuthorId = guid();
+
+  	var chatHandler = function(datasnapshot) {
+  		var message = datasnapshot.val();
+
+  		firebaseRef.child('chat/authors/'+message.authorId).once('value', function(snapshot){
+	  		var chatId = message.timestamp
+	  		$('#chat-presentation').append("<div class='chat-message' id='"+chatId+"'>");
+	  		$('#'+chatId).append("<div class='author-id'>" +snapshot.val()+ "</div>");
+	  		$('#'+chatId).append("<div class='timestamp'>" +new Date(message.timestamp)+ "</div>");
+	  		$('#'+chatId).append("<div class='message-text'>" +message.messageText+ "</div>");  			
+  		});
+
+  		var chatDiv = $('#chat-presentation');
+  		chatDiv.scrollTop(chatDiv.prop('scrollHeight')+100);
+  	}
+
+  	function updateEnabledFeature(feature, enabled) {
+  		$("#"+feature+"-enabled").prop("checked", enabled);
+  		if(enabled) {
+  			$("#"+feature+"-input").show()
+  			$("#"+feature+"-presentation").show()
+  			$("#"+feature+"-description").hide()
+  		} else {
+  			$("#"+feature+"-input").hide();
+  			$("#"+feature+"-presentation").hide()
+  			$("#"+feature+"-description").show()
+  		}
+  	}
+
+  	$( document ).ready(function() {
+
+      sessionId = window.location.search.substr(1).replace(/-/g, "");
+
+      firebaseRef = new Firebase("https://mabu-hackweek-2015.firebaseio.com/"+sessionId);
+
+	  firebaseRef.child('featuresEnabled').once("value", function(snapshot){
+	  	config = snapshot.val();
+	  	if(config == null) {
+	  		//Fill in an initial configuration
+	  		firebaseRef.child('featuresEnabled').set({
+	  					description: false,
+	  					"linked-in": false,
+	  					"doc-view": false,
+	  					chat: false,
+	  					twicker: false
+	  		});
+	  	} else {
+	  		// Make sure the webpage reflects the value on firebase
+	  		features.forEach(function(feature){
+	  			updateEnabledFeature(feature, config[feature]);
+	  		});
+	  	}
+	  });
+
+	  initializeInput('linked-in/url', "linked-in-url", function(url){
+	  	loadLinkedInProfile(url);	  	
+	  });
+
+	  initializeInput('description/text', 'description-text', function(text){
+	  	loadDescription(text);	  	
+	  });
+
+    initializeInput('doc-view/url', 'doc-view-url', function(url){
+      loadDocView(url);
+    })
+
+    initializeInput('twicker/hashtag', 'twicker-hashtag', function(hashtag){
+      loadHashTag(hashtag);
+    });
+
+	  firebaseRef.child('chat/messages').on('child_added', chatHandler);
+
+	  var author = new Object();
+	  author[myAuthorId] = "Allan";
+
+	  firebaseRef.child('chat/authors').update(author);
+	});
+
+
+	function handleEnableChange(input, section) {
+		var update = new Object();
+		update[section] = input.checked;
+		firebaseRef.child("featuresEnabled").update(update);
+		updateEnabledFeature(section, input.checked);
+	}
+
+	function handleEnableChat(input) {
+		handleEnableChange(input, "chat");
+
+		if(input.checked) {
+			firebaseRef.child("chat/messages").on("child_added", chatHandler);
+		} else {
+			firebaseRef.child("chat/messages").off("child_added");
+			$('#chat-presentation').empty();
+		}
+	}
+
+	function handleSendMessage(elmnt) {
+		var chat = new Object();
+		chat.authorId = myAuthorId;
+		chat.timestamp = new Date().valueOf();
+		chat.messageText = $('#'+elmnt).val();
+
+		firebaseRef.child("chat/messages").push(chat);
+
+		$('#chat-message').val('');
+	}
+
+	function handleDescriptionUpdate() {
+		var data = new Object();
+		data.text = $("#description-text").val();
+		firebaseRef.child("description").update(data);
+		loadDescription(data.text);
+	}
+
+	function handleLinkedInUpdate() {
+		var data = new Object();
+		data.url = $("#linked-in-url").val();
+		firebaseRef.child("linked-in").update(data);
+		loadLinkedInProfile(data.url);
+	}
+
+  function handleDocViewUpdate(elmnt) {
+    var data = new Object();
+    data.url = $("#doc-view-url").val();
+    firebaseRef.child("doc-view").update(data);
+    loadDocView(data.url);
+  }
+
+  function handleHashTagUpdate(elmnt) {
+    var data = new Object();
+    data.hashtag = $("#twicker-hashtag").val();
+    firebaseRef.child("twicker").update(data);
+    loadHashTag(data.hashtag);
+  }
+
+  function loadHashTag(hashtag) {
+
+  }
+
+	function loadLinkedInProfile(url) {
+		$('#linked-in-presentation').html('<script type="IN/MemberProfile" data-id="'+ url +'" data-format="inline" data-related="false"><\/script>');
+		IN.parse();
+	}
+
+	function loadDescription(text) {
+		$("#description-presentation").html(text);
+	}
+
+  function loadDocView(url) {
+    $("#doc-view-presentation").html('<iframe width="75%" src="'+url+'"><\/iframe>');
+  }
+
+	function initializeInput(path, elmnt, func) {
+		firebaseRef.child(path).once("value", function(datasnapshot){
+			$("#"+elmnt).val(datasnapshot.val());
+			if(func != null) {
+				func(datasnapshot.val());
+			}			
+		});
+	}
+
+  </script>
+
+  <body>
+
+  	<div id='wrapper'>
+  	<h3>Hallway</h3>
+  	<div class='section' name='description'>
+  	  <div class='title'>
+  	  	<input class='enabled' type='checkbox' id='description-enabled' onclick='handleEnableChange(this, "description");'/>
+  	  	Description 
+  	  	<div class="section-description" id="description-description">This is a description</div>
+  	  </div>
+  	  <div id='description-input'>
+  	  	<input class='input' type='text' id='description-text'/>
+  	  	<button id='description-in-update' onclick='handleDescriptionUpdate()'>Update</button>
+  	  </div>
+  	  <div class='presentation' id='description-presentation'></div>
+  	</div>
+  	
+  	<div class='section' name='linked-in'>
+  	  <div class='title'>
+  	  	<input class='enabled' type='checkbox' id='linked-in-enabled' onclick='handleEnableChange(this, "linked-in");'/>
+  	  	Linked In Profile
+  	  	<div class="section-description" id="linked-in-description">This is a description</div>
+  	  </div>
+  	  <div id="linked-in-input">
+  	  	<input class='input' type='text' id='linked-in-url' />
+  	  	<button id='linked-in-update' onclick='handleLinkedInUpdate()'>Update</button>
+  	  </div>
+  	  <div class='presentation' id='linked-in-presentation'></div>
+  	</div>
+  	  
+  	<div class='section' name='doc-view'>
+  	  <div class='title'>
+  	  	<input class='enabled' type='checkbox' id='doc-view-enabled' onclick='handleEnableChange(this, "doc-view");'/>
+  	  	Document View
+  	  	<div class="section-description" id="doc-view-description">This is a description</div>
+  	  </div>
+  	  <div id="doc-view-input">
+  	  	<input class='input' type='text' id='doc-view-url'/>
+  	  	<button onclick='handleDocViewUpdate("doc-view-url")'>Update</button>
+  	  </div>
+  	  <div class='presentation' id='doc-view-presentation'></div>
+	</div>
+
+  	<div class='section' name='chat'>
+  	  <div class='title'>
+  	  	<input class='enabled' type='checkbox' id='chat-enabled' onclick='handleEnableChat(this);'/>
+  	  	Chat
+  	  	<div class="section-description" id="chat-description">This is a description</div>
+  	  </div>
+  	  <div id="chat-input">
+  	  	<input class='input' type='text' id='chat-message'/>
+  	  	<button onclick='handleSendMessage("chat-message");'>Send</button>
+  	  </div>
+  	  <div class='presentation' id='chat-presentation'></div>
+  	</div>
+  	</div>
+
+  	<div class='section' id='twicker'>
+  	  <div class='title'>
+  	  	<input class='enabled' type='checkbox' id='twicker-enabled' onclick='handleEnableChange(this, "twicker");'/>
+  	  	The Twitter Ticker
+  	  	<div class="section-description" id="twicker-description">This is a description</div>
+  	  </div>
+  	  <div id="twicker-input">
+  	  	<input class='input' type='text' id='twicker-hashtag'/>
+  	  	<button onclick='handleHashTagUpdate("twicker-hashtag")'>Update</button>
+  	  </div>
+  	  <div class='presentation' id='twicker-presentation'></div>
+	</div>
+
+  </body>
+</html>
