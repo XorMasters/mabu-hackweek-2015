@@ -140,31 +140,6 @@
   	<h2 class='title'>Hallway Controller</h2>
     <h3 class='subtitle'>Webinar name &amp; date</h3>
 
-    <div class="panel section">
-      <div class="panel-body main">
-        <h3>Description</h3>
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" value="" id='description-enabled' onclick='handleEnableChange(this, "description");'>
-              This is visible to all attendees
-          </label>    
-        </div>
-
-        <label class="col-sm-2 control-label" style="margin-top: 20px;">Edit</label>
-        <textarea class="form-control hallway" id='description-text' placeholder='Enter a description for your webinar here'/></textarea>
-
-        <label class="col-sm-2 control-label preview-label">Preview</label>
-        <div class="panel preview-box">
-      	  <div class='panel-body' id='description-presentation'></div>
-        </div>
-
-        <div id='description-input'>
-          <button class="btn btn-default" id='description-in-update' onclick='handleDescriptionUpdate()'>Update Description</button>
-        </div>
-
-      </div>
-     </div>
-  	
   	<div class='panel section'>
   	  <div class='panel-body main'>
         <h3>Linked In Profile</h3>
@@ -261,7 +236,34 @@
 	    </div>
 
       <button class="btn btn-default" onclick='handleHashTagUpdate("twicker-hashtag")'>Update Hashtag</button>
+    </div>
+  </div>
 
+    <div class="panel section">
+      <div class="panel-body main">
+        <h3>Description</h3>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="" id='description-enabled' onclick='handleEnableChange(this, "description");'>
+              This is visible to all attendees
+          </label>    
+        </div>
+
+        <label class="col-sm-2 control-label" style="margin-top: 20px;">Edit</label>
+        <textarea class="form-control hallway" id='description-text' placeholder='Enter a description for your webinar here'/></textarea>
+
+        <label class="col-sm-2 control-label preview-label">Preview</label>
+        <div class="panel preview-box">
+          <div class='panel-body' id='description-presentation'></div>
+        </div>
+
+        <div id='description-input'>
+          <button class="btn btn-default" id='description-in-update' onclick='handleDescriptionUpdate()'>Update Description</button>
+        </div>
+
+      </div>
+     </div>
+    
     <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.3.0/es5-shim.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/json3/3.3.1/json3.min.js"></script>
